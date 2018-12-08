@@ -5,10 +5,12 @@ import monocle.Iso
 trait IsoExample {
   val MAGICAL_CONSTANT = 5.0 // this would be in pounds
 
-  implicit val poundsEuroIso = Iso[Pounds, Euro](pounds  => Euro(pounds.amount * 0.89))(euro   => Pounds(euro.amount * 1.12))
-  implicit val poundsLeiIso  = Iso[Pounds, Lei]  (pounds => Lei(pounds.amount * 5.19))(lei    => Pounds(lei.amount * 0.19))
-  implicit val euroLeiIso    = Iso[Euro, Lei]    (pounds => Lei(pounds.amount * 4.64))(lei    => Euro(lei.amount * 0.22))
-  implicit val pennyToPounds = Iso[Penny, Pounds](penny  => Pounds(penny.amount / 100))(pounds => Penny(pounds.amount * 100))//or whatever this is
+  implicit val poundsEuroIso: Iso[Pounds, Euro]  = Iso[Pounds, Euro](pounds  => Euro(pounds.amount * 1.12))(euro   => Pounds(euro.amount * 0.89))
+  implicit val poundsLeiIso : Iso[Pounds, Lei]   = Iso[Pounds, Lei]  (pounds => Lei(pounds.amount * 5.19))(lei     => Pounds(lei.amount * 0.19))
+  implicit val pennyToPounds: Iso[Penny, Pounds] = Iso[Penny, Pounds](penny  => Pounds(penny.amount / 100))(pounds => Penny(pounds.amount * 100))//or whatever this is
+
+  implicit val euroToLeiIsoTransition: Iso[Euro, Lei] = poundsEuroIso.reverse.composeIso(poundsLeiIso)
+  implicit val euroLeiIsoDirect      : Iso[Euro, Lei] = Iso[Euro, Lei](euro => Lei(euro.amount * 4.64))(lei => Euro(lei.amount * 0.22))
 
   def poundToCurrency[C <: Currency](implicit iso: Iso[Pounds, C]): Iso[Pounds, C] = iso
 
@@ -26,12 +28,17 @@ trait IsoExample {
     iso.get(amountToApply)
   }
 
-  def transformPenny[C](penny: Penny)(implicit iso: Iso[Penny, C]) = {
-    iso.get(penny)
-  }
+  def transformPenny[C](penny: Penny)(implicit iso: Iso[Penny, C]): C = iso.get(penny)
+  def transformToLei(euro: Euro)(iso: Iso[Euro, Lei]): Lei   = iso.get(euro)
 
   def runDemo(): Unit = {
-    println("Based on the relation of transition between Iso's, we'll try to convert Penny to Lei using Pound as in intermediary Iso")
+    println("Based on the relation of transition between Iso's, we'll try to convert Penny to Lei and then Euro using Pound as in intermediary Iso")
     println(transformPenny[Lei](Penny(100)))
+    println(transformPenny[Euro](Penny(100)))
+    println("\n\n\n")
+
+    println("Comparing the direct iso with the one obtained through transition")
+    println(transformToLei(Euro(100))(euroLeiIsoDirect))
+    println(transformToLei(Euro(100))(euroToLeiIsoTransition))
   }
 }

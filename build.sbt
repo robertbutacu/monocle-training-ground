@@ -2,8 +2,6 @@ name := "monocle-training-ground"
 
 version := "0.1"
 
-scalaVersion := "2.12.8"
-
 val monocleVersion = "1.5.0" // 1.5.0-cats based on cats 1.0.x
 
 libraryDependencies ++= Seq(
