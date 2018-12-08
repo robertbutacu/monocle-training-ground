@@ -1,4 +1,5 @@
-import iso.{IsoExample, Lei, Penny}
+import iso.IsoExample
 
-object Main extends App with IsoExample{
+object Main extends App with IsoExample {
+  runDemo()
 }

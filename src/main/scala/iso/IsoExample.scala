@@ -10,10 +10,11 @@ trait IsoExample {
   implicit val euroLeiIso    = Iso[Euro, Lei]    (pounds => Lei(pounds.amount * 4.64))(lei    => Euro(lei.amount * 0.22))
   implicit val pennyToPounds = Iso[Penny, Pounds](penny  => Pounds(penny.amount / 100))(pounds => Penny(pounds.amount * 100))//or whatever this is
 
+  def poundToCurrency[C <: Currency](implicit iso: Iso[Pounds, C]): Iso[Pounds, C] = iso
+
   //and now that we've defined a penny to pounds Isomorphism, we automatically get a penny to anything else based on transition
-  implicit def pennyToCurrency[C <: Currency](implicit iso1: Iso[Penny, Pounds], iso2: Iso[Pounds, C]): Iso[Penny, C] = {
-    Iso[Penny, C]{penny => iso2.get(iso1.get(penny))}{other => iso1.reverseGet(iso2.reverseGet(other))}
-  }
+  implicit def pennyToCurrency[C <: Currency](implicit iso: Iso[Pounds, C]): Iso[Penny, C] = pennyToPounds.composeIso(poundToCurrency[C])
+
 
   // using Isomorphism to get and reverseGet a value to an universal one
   // we could go even further
